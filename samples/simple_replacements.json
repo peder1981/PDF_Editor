@@ -1,0 +1,17 @@
+[
+  {
+    "search": "Q1 2023",
+    "replace": "Q2 2023",
+    "case_sensitive": false
+  },
+  {
+    "search": "TechCorp Solutions",
+    "replace": "InnovateTech Ltd.",
+    "case_sensitive": true
+  },
+  {
+    "search": "$2.5M",
+    "replace": "$3.2M",
+    "case_sensitive": false
+  }
+]

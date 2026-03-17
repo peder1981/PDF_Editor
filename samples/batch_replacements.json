@@ -1,0 +1,43 @@
+{
+  "jobs": [
+    {
+      "input": "samples/sample_contract.pdf",
+      "output": "samples/contract_updated.pdf",
+      "method": "exact",
+      "operations": [
+        {
+          "search": "ACME Corporation",
+          "replace": "TechStart Inc.",
+          "case_sensitive": true
+        },
+        {
+          "search": "John Doe",
+          "replace": "Jane Smith",
+          "case_sensitive": true
+        },
+        {
+          "search": "2023",
+          "replace": "2024",
+          "case_sensitive": false
+        }
+      ]
+    },
+    {
+      "input": "samples/sample_invoice.pdf",
+      "output": "samples/invoice_updated.pdf",
+      "method": "structure",
+      "operations": [
+        {
+          "search": "ABC Company Inc.",
+          "replace": "New Client Corp.",
+          "case_sensitive": true
+        },
+        {
+          "search": "$8,100.00",
+          "replace": "$9,500.00",
+          "case_sensitive": false
+        }
+      ]
+    }
+  ]
+}
