@@ -126,6 +126,8 @@ class UnifiedTUIMain(App):
     def __init__(self):
         super().__init__()
         self.source_mode = "single"  # "single" ou "batch"
+        self.single_mode_btn = None
+        self.batch_mode_btn = None
     
     def compose(self) -> ComposeResult:
         yield Header()
@@ -275,14 +277,18 @@ class UnifiedTUIMain(App):
         
         if button_id == "single-mode":
             self.source_mode = "single"
-            self.single_mode_btn.variant = "primary"
-            self.batch_mode_btn.variant = "default"
+            single_btn = self.query_one("#single-mode", Button)
+            batch_btn = self.query_one("#batch-mode", Button)
+            single_btn.variant = "primary"
+            batch_btn.variant = "default"
             self._log("📄 Modo selecionado: Arquivo único")
         
         elif button_id == "batch-mode":
             self.source_mode = "batch"
-            self.batch_mode_btn.variant = "primary"
-            self.single_mode_btn.variant = "default"
+            single_btn = self.query_one("#single-mode", Button)
+            batch_btn = self.query_one("#batch-mode", Button)
+            batch_btn.variant = "primary"
+            single_btn.variant = "default"
             self._log("📁 Modo selecionado: Processamento em lote")
         
         elif button_id == "select-source":

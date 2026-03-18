@@ -94,6 +94,10 @@ def replace(
             replacements = editor.replace_text_integral(search_text, replace_text)
         elif method == "template":
             replacements = editor.replace_text_template(search_text, replace_text)
+        elif method == "layout-preserving":
+            replacements = editor.replace_text_layout_preserving(search_text, replace_text, case_sensitive)
+        elif method == "background-preserving":
+            replacements = editor.replace_text_background_preserving(search_text, replace_text, case_sensitive)
         else:
             console.print(f"[red]Error: Unknown method '{method}'[/red]")
             raise typer.Exit(1)
@@ -122,7 +126,7 @@ def batch(
     input_file: Path = typer.Argument(..., help="Input PDF file"),
     replacements_file: Path = typer.Argument(..., help="JSON file with replacements"),
     output_file: Optional[Path] = typer.Argument(None, help="Output PDF file"),
-    method: str = typer.Option("exact", help="Replacement method: exact, comprehensive, structure, smart, heuristic, integral, template")
+    method: str = typer.Option("exact", help="Replacement method: exact, comprehensive, structure, smart, heuristic, integral, template, layout-preserving, background-preserving")
 ):
     """Perform batch text replacements from a JSON file"""
     

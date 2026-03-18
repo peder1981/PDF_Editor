@@ -11,8 +11,12 @@ from pathlib import Path
 import fitz
 from unittest.mock import Mock, patch, MagicMock
 
-from pdf_editor import PDFEditor, EditOperation, TextInstance
-from batch_processor import BatchProcessor, BatchJob
+import sys
+sys.path.insert(0, '..')
+sys.path.insert(0, '../core')
+
+from core.pdf_editor import PDFEditor, EditOperation, TextInstance
+from core.batch_processor import BatchProcessor, BatchJob
 
 
 class TestPDFEditor(unittest.TestCase):
