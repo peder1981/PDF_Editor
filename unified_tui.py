@@ -218,7 +218,13 @@ class UnifiedTUIMain(App):
                 self.method_select = Select(
                     [("Exato (Exact)", "exact"), 
                      ("Compreensivo", "comprehensive"),
-                     ("Estrutura", "structure")],
+                     ("Estrutura", "structure"),
+                     ("Inteligente (Smart)", "smart"),
+                     ("Heurístico", "heuristic"),
+                     ("Integral", "integral"),
+                     ("Template", "template"),
+                     ("Preservar Layout", "layout-preserving"),
+                     ("Preservar Background", "background-preserving")],
                     value="exact",
                     id="method-select"
                 )
@@ -468,8 +474,18 @@ class UnifiedTUIMain(App):
                 count = editor.replace_text_exact(search_text, replace_text, case_sensitive)
             elif method == "comprehensive":
                 count = editor.replace_text_comprehensive(search_text, replace_text)
-            else:
+            elif method == "structure":
                 count = editor.replace_text_structure_preserving(search_text, replace_text)
+            elif method == "smart":
+                count = editor.replace_text_smart(search_text, replace_text)
+            elif method == "heuristic":
+                count = editor.replace_text_heuristic(search_text, replace_text)
+            elif method == "integral":
+                count = editor.replace_text_integral(search_text, replace_text)
+            elif method == "template":
+                count = editor.replace_text_template(search_text, replace_text)
+            else:
+                count = 0
             
             self._log(f"   → {count} substituições realizadas")
         

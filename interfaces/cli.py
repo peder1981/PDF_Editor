@@ -28,7 +28,7 @@ def replace(
     search_text: str = typer.Argument(..., help="Text to search for"),
     replace_text: str = typer.Argument(..., help="Replacement text"),
     output_file: Optional[Path] = typer.Argument(None, help="Output PDF file"),
-    method: str = typer.Option("exact", help="Replacement method: exact, comprehensive, structure"),
+    method: str = typer.Option("exact", help="Replacement method: exact, comprehensive, structure, smart, heuristic, integral, template, layout-preserving, background-preserving"),
     case_sensitive: bool = typer.Option(False, "--case-sensitive", "-c", help="Case sensitive search"),
     preview: bool = typer.Option(False, "--preview", "-p", help="Preview changes before applying")
 ):
@@ -86,6 +86,14 @@ def replace(
             replacements = editor.replace_text_comprehensive(search_text, replace_text)
         elif method == "structure":
             replacements = editor.replace_text_structure_preserving(search_text, replace_text)
+        elif method == "smart":
+            replacements = editor.replace_text_smart(search_text, replace_text)
+        elif method == "heuristic":
+            replacements = editor.replace_text_heuristic(search_text, replace_text)
+        elif method == "integral":
+            replacements = editor.replace_text_integral(search_text, replace_text)
+        elif method == "template":
+            replacements = editor.replace_text_template(search_text, replace_text)
         else:
             console.print(f"[red]Error: Unknown method '{method}'[/red]")
             raise typer.Exit(1)
@@ -114,7 +122,7 @@ def batch(
     input_file: Path = typer.Argument(..., help="Input PDF file"),
     replacements_file: Path = typer.Argument(..., help="JSON file with replacements"),
     output_file: Optional[Path] = typer.Argument(None, help="Output PDF file"),
-    method: str = typer.Option("exact", help="Replacement method: exact, comprehensive, structure")
+    method: str = typer.Option("exact", help="Replacement method: exact, comprehensive, structure, smart, heuristic, integral, template")
 ):
     """Perform batch text replacements from a JSON file"""
     

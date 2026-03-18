@@ -100,15 +100,17 @@ python3 -m interfaces.cli replace atestado.pdf \
   atestado_atualizado.pdf
 ```
 
-### 📅 Exemplo 2: Atualizar Idade e Data
+### 📅 Exemplo 2: Atualizar Idade e Data com Preservação de Layout
 
 ```bash
-# Substituições múltiplas via GUI:
-# 1. Abra o arquivo PDF
-# 2. Adicione substituições:
-#    - "46 anos" → "36 anos"
-#    - "19 de agosto de 1979" → "29 de maio de 1989"
-# 3. Clique em "Processar"
+# Usando método de preservação de layout (mantém gráficos e backgrounds)
+python3 -m interfaces.cli replace atestado.pdf \
+  "46 anos" \
+  "36 anos" \
+  atestado_atualizado.pdf \
+  --method layout-preserving
+
+# Ou via GUI: Selecione "layout-preserving" no dropdown de métodos
 ```
 
 ### 📁 Exemplo 3: Processar Pasta Inteira (Lote)
@@ -142,6 +144,12 @@ Escolha o método mais adequado para seu caso:
 | **Exact** | Edições simples, preservar layout original | Substituição precisa na posição exata |
 | **Comprehensive** | Documentos complexos com imagens | Separa elementos gráficos do texto |
 | **Structure** | Fonte homogênea é prioridade | Reescreve parágrafo com fonte consistente |
+| **Layout-Preserving** ⭐ | Preservar gráficos e backgrounds | Mantém todos os elementos visuais intactos |
+| **Background-Preserving** ⭐ | Documentos com cores de fundo | Preserva backgrounds e elementos decorativos |
+
+**🆕 Novos Métodos de Preservação:**
+- **Layout-Preserving:** Usa redação avançada para preservar gráficos, imagens e backgrounds enquanto substitui o texto
+- **Background-Preserving:** Foca na preservação de cores de fundo e elementos decorativos do documento
 
 ---
 

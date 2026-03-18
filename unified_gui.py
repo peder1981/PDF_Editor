@@ -156,8 +156,8 @@ class PDFEditorUnifiedGUI:
         self.method_var = tk.StringVar(value="exact")
         ttk.Label(options_frame, text="Método:").grid(row=0, column=0, sticky="w")
         ttk.Combobox(options_frame, textvariable=self.method_var, 
-                    values=["exact", "comprehensive", "structure"], 
-                    state="readonly", width=15).grid(row=0, column=1, sticky="w", padx=5)
+                    values=["exact", "comprehensive", "structure", "smart", "heuristic", "integral", "template", "layout-preserving", "background-preserving"], 
+                    state="readonly", width=25).grid(row=0, column=1, sticky="w", padx=5)
         
         self.case_sensitive_var = tk.BooleanVar()
         ttk.Checkbutton(options_frame, text="Diferenciar maiúsculas/minúsculas", 
@@ -366,8 +366,18 @@ class PDFEditorUnifiedGUI:
                 count = editor.replace_text_exact(search_text, replace_text, case_sensitive)
             elif method == "comprehensive":
                 count = editor.replace_text_comprehensive(search_text, replace_text)
-            else:  # structure
+            elif method == "structure":
                 count = editor.replace_text_structure_preserving(search_text, replace_text)
+            elif method == "smart":
+                count = editor.replace_text_smart(search_text, replace_text)
+            elif method == "heuristic":
+                count = editor.replace_text_heuristic(search_text, replace_text)
+            elif method == "integral":
+                count = editor.replace_text_integral(search_text, replace_text)
+            elif method == "template":
+                count = editor.replace_text_template(search_text, replace_text)
+            else:
+                count = 0
             
             self._log(f"   → {count} substituições realizadas")
         
