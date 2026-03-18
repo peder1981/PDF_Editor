@@ -349,6 +349,26 @@ class PDFEditorTUI(App):
                     config['search'], 
                     config['replace']
                 )
+            elif config['method'] == "smart":
+                count = self.pdf_editor.replace_text_smart(
+                    config['search'], 
+                    config['replace']
+                )
+            elif config['method'] == "heuristic":
+                count = self.pdf_editor.replace_text_heuristic(
+                    config['search'], 
+                    config['replace']
+                )
+            elif config['method'] == "integral":
+                count = self.pdf_editor.replace_text_integral(
+                    config['search'], 
+                    config['replace']
+                )
+            elif config['method'] == "template":
+                count = self.pdf_editor.replace_text_template(
+                    config['search'], 
+                    config['replace']
+                )
             else:
                 count = 0
             

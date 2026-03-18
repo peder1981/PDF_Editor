@@ -404,6 +404,14 @@ class PDFEditorGUI:
                     count = self.pdf_editor.replace_text_comprehensive(search_text, replace_text)
                 elif method == "structure":
                     count = self.pdf_editor.replace_text_structure_preserving(search_text, replace_text)
+                elif method == "smart":
+                    count = self.pdf_editor.replace_text_smart(search_text, replace_text)
+                elif method == "heuristic":
+                    count = self.pdf_editor.replace_text_heuristic(search_text, replace_text)
+                elif method == "integral":
+                    count = self.pdf_editor.replace_text_integral(search_text, replace_text)
+                elif method == "template":
+                    count = self.pdf_editor.replace_text_template(search_text, replace_text)
                 else:
                     count = 0
                 

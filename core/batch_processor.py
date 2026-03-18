@@ -13,7 +13,7 @@ from dataclasses import dataclass
 import threading
 from tqdm import tqdm
 
-from pdf_editor import PDFEditor, EditOperation
+from core.pdf_editor import PDFEditor, EditOperation
 
 
 @dataclass
@@ -132,6 +132,34 @@ class BatchProcessor:
             elif job.method == "structure":
                 for operation in job.operations:
                     count = editor.replace_text_structure_preserving(
+                        operation.search_text,
+                        operation.replace_text
+                    )
+                    total_replacements += count
+            elif job.method == "smart":
+                for operation in job.operations:
+                    count = editor.replace_text_smart(
+                        operation.search_text,
+                        operation.replace_text
+                    )
+                    total_replacements += count
+            elif job.method == "heuristic":
+                for operation in job.operations:
+                    count = editor.replace_text_heuristic(
+                        operation.search_text,
+                        operation.replace_text
+                    )
+                    total_replacements += count
+            elif job.method == "integral":
+                for operation in job.operations:
+                    count = editor.replace_text_integral(
+                        operation.search_text,
+                        operation.replace_text
+                    )
+                    total_replacements += count
+            elif job.method == "template":
+                for operation in job.operations:
+                    count = editor.replace_text_template(
                         operation.search_text,
                         operation.replace_text
                     )
