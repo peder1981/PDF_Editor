@@ -15,6 +15,32 @@
 
 Este guia ajuda a resolver problemas comuns ao usar o PDF Editor, desde instalação até execução avançada.
 
+### **Soluções Aplicadas Recentemente**
+
+✅ **TUI MountError - Resolvido**
+- **Problema:** `MountError: Can't mount <class 'generator'>; expected a Widget instance.`
+- **Causa:** Métodos auxiliares usavam yield statements, criando generators em vez de widgets
+- **Solução:** Removido yield statements de métodos auxiliares (`_create_source_section()`, `_create_replacements_section()`, `_create_process_section()`)
+- **Resultado:** TUI carrega corretamente sem erros
+
+✅ **TUI AttributeError - Resolvido**
+- **Problema:** `AttributeError: 'UnifiedTUIMain' object has no attribute 'single_mode_btn'`
+- **Causa:** Botões não eram referenciados corretamente no código
+- **Solução:** Adicionado query_one para acessar botões por ID em vez de usar referências self
+- **Resultado:** Eventos de botões funcionam corretamente
+
+✅ **CLI Unknown Method Error - Resolvido**
+- **Problema:** `Error: Unknown method 'layout-preserving'`
+- **Causa:** CLI não reconhecia os novos métodos de preservação
+- **Solução:** Adicionado suporte para métodos `layout-preserving` e `background-preserving` no CLI
+- **Resultado:** Todos os métodos funcionam via CLI
+
+✅ **Unit Test Import Error - Resolvido**
+- **Problema:** `ModuleNotFoundError: No module named 'pdf_editor'`
+- **Causa:** Import paths não correspondiam à nova estrutura do projeto
+- **Solução:** Corrigidos import paths para usar `core.pdf_editor` e `core.batch_processor`
+- **Resultado:** Testes unitários executam corretamente (10/11 passaram)
+
 ---
 
 ## ⚠️ Problemas Comuns

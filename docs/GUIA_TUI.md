@@ -46,6 +46,18 @@ python3 main_launcher.py --tui
 # Deve abrir uma interface terminal interativa
 ```
 
+### **Correções Recentes**
+
+✅ **Fixed TUI MountError**
+- Removido yield statements de métodos auxiliares
+- Métodos `_create_source_section()`, `_create_replacements_section()`, e `_create_process_section()` agora retornam widgets diretamente
+- Interface TUI carrega corretamente sem erros
+
+✅ **Fixed TUI AttributeError**
+- Adicionado query_one para acessar botões por ID
+- Botões agora são acessados via `query_one("#button-id", Button)` em vez de referências self
+- Eventos de botões funcionam corretamente
+
 ---
 
 ## 🎯 Como Usar

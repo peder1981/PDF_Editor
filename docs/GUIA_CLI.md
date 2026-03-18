@@ -47,6 +47,22 @@ python3 -m interfaces.cli --help
 # Advanced PDF Editor - Edit PDFs while preserving structure
 ```
 
+### **Correções Recentes**
+
+✅ **Added CLI support for layout-preserving and background-preserving**
+- Métodos `layout-preserving` e `background-preserving` agora funcionam em CLI
+- Help text atualizado com novos métodos
+- Todos os métodos de edição disponíveis via CLI:
+  - `exact`
+  - `comprehensive`
+  - `structure`
+  - `smart`
+  - `heuristic`
+  - `integral`
+  - `template`
+  - `layout-preserving` ⭐
+  - `background-preserving` ⭐
+
 ---
 
 ## 🎯 Comandos Disponíveis
