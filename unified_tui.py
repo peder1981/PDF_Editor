@@ -156,66 +156,54 @@ class UnifiedTUIMain(App):
     
     def _create_source_section(self) -> Container:
         """Cria seção de origem e destino"""
-        container = Container(classes="section")
+        widgets = [
+            Label("🎯 Modo de Operação:", classes="label"),
+            Horizontal(
+                Button("📄 Arquivo Único", variant="primary", id="single-mode"),
+                Button("📁 Processamento em Lote", id="batch-mode")
+            ),
+            Label("📁 Origem:", classes="label"),
+            Horizontal(
+                Static(id="source-display", classes="path-display"),
+                Button("🔍 Selecionar", id="select-source")
+            ),
+            Label("💾 Destino:", classes="label"),
+            Horizontal(
+                Static(id="dest-display", classes="path-display"),
+                Button("🔍 Selecionar", id="select-dest")
+            )
+        ]
         
-        with container:
-            yield Label("🎯 Modo de Operação:", classes="label")
-            
-            with Horizontal():
-                self.single_mode_btn = Button("📄 Arquivo Único", variant="primary", id="single-mode")
-                self.batch_mode_btn = Button("📁 Processamento em Lote", id="batch-mode")
-                yield self.single_mode_btn
-                yield self.batch_mode_btn
-            
-            yield Label("📁 Origem:", classes="label")
-            with Horizontal():
-                yield Static(id="source-display", classes="path-display")
-                yield Button("🔍 Selecionar", id="select-source")
-            
-            yield Label("💾 Destino:", classes="label")
-            with Horizontal():
-                yield Static(id="dest-display", classes="path-display")
-                yield Button("🔍 Selecionar", id="select-dest")
-        
-        return container
+        return Container(*widgets, classes="section")
     
     def _create_replacements_section(self) -> Container:
         """Cria seção de substituições"""
-        container = Container(classes="section")
+        widgets = [
+            Label("➕ Adicionar Substituição:", classes="label"),
+            Horizontal(
+                Label("Buscar:"),
+                Input(placeholder="Texto a ser encontrado...", id="search-input"),
+                Label("Substituir por:"),
+                Input(placeholder="Novo texto...", id="replace-input"),
+                Button("➕ Adicionar", id="add-replacement")
+            ),
+            Label("📋 Substituições Configuradas:"),
+            DataTable(id="replacements-table", classes="replacements-list"),
+            Horizontal(
+                Button("🗑️ Remover Selecionado", id="remove-replacement"),
+                Button("🗑️ Limpar Todos", id="clear-replacements")
+            )
+        ]
         
-        with container:
-            yield Label("➕ Adicionar Substituição:", classes="label")
-            
-            with Horizontal():
-                yield Label("Buscar:")
-                self.search_input = Input(placeholder="Texto a ser encontrado...", id="search-input")
-                yield self.search_input
-                
-                yield Label("Substituir por:")
-                self.replace_input = Input(placeholder="Novo texto...", id="replace-input")
-                yield self.replace_input
-                
-                yield Button("➕ Adicionar", id="add-replacement")
-            
-            yield Label("📋 Substituições Configuradas:")
-            yield DataTable(id="replacements-table", classes="replacements-list")
-            
-            with Horizontal():
-                yield Button("🗑️ Remover Selecionado", id="remove-replacement")
-                yield Button("🗑️ Limpar Todos", id="clear-replacements")
-        
-        return container
+        return Container(*widgets, classes="section")
     
     def _create_process_section(self) -> Container:
         """Cria seção de processamento"""
-        container = Container(classes="section")
-        
-        with container:
-            yield Label("⚙️ Opções:", classes="label")
-            
-            with Horizontal():
-                yield Label("Método:")
-                self.method_select = Select(
+        widgets = [
+            Label("⚙️ Opções:", classes="label"),
+            Horizontal(
+                Label("Método:"),
+                Select(
                     [("Exato (Exact)", "exact"), 
                      ("Compreensivo", "comprehensive"),
                      ("Estrutura", "structure"),
@@ -227,22 +215,19 @@ class UnifiedTUIMain(App):
                      ("Preservar Background", "background-preserving")],
                     value="exact",
                     id="method-select"
-                )
-                yield self.method_select
-                
-                self.case_checkbox = Checkbox("Diferenciar maiúsculas/minúsculas", id="case-sensitive")
-                yield self.case_checkbox
-            
-            yield Label("")  # Espaço
-            
-            with Horizontal():
-                yield Button("📊 Visualizar Informações", id="preview-info")
-                yield Button("🚀 Processar", variant="success", id="process")
-            
-            yield Label("")  # Espaço
-            yield Static(id="status-display", classes="path-display")
+                ),
+                Checkbox("Diferenciar maiúsculas/minúsculas", id="case-sensitive")
+            ),
+            Label(""),  # Espaço
+            Horizontal(
+                Button("📊 Visualizar Informações", id="preview-info"),
+                Button("🚀 Processar", variant="success", id="process")
+            ),
+            Label(""),  # Espaço
+            Static(id="status-display", classes="path-display")
+        ]
         
-        return container
+        return Container(*widgets, classes="section")
     
     def on_mount(self) -> None:
         """Inicialização"""
