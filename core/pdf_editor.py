@@ -159,6 +159,18 @@ class PDFEditor:
                         matching_instance = instance
                         break
                 
+                # Try to rebuild the entire line when replacing text to keep layout identical
+                if self._replace_text_with_line_reflow(
+                    page,
+                    rect,
+                    search_text,
+                    replace_text,
+                    case_sensitive,
+                    matching_instance
+                ):
+                    replacements += 1
+                    continue
+                
                 # Use redaction for clean replacement
                 try:
                     if matching_instance:
@@ -205,7 +217,71 @@ class PDFEditor:
                     # The count might be inflated, so let's be more conservative
                     replacements = max(0, replacements - 1)  # Adjust count to be more accurate
         
+        # Refresh cached text instances so subsequent searches see updated content
+        if replacements > 0:
+            self._extract_text_instances()
         return max(0, replacements)  # Ensure we don't return negative numbers
+
+    def _replace_text_with_line_reflow(
+        self,
+        page: fitz.Page,
+        rect: fitz.Rect,
+        search_text: str,
+        replace_text: str,
+        case_sensitive: bool,
+        matching_instance: Optional[TextInstance]
+    ) -> bool:
+        """Rewrite entire line containing the search text to keep layout identical."""
+        try:
+            text_dict = page.get_text("dict")
+        except Exception:
+            return False
+        search_term = search_text if case_sensitive else search_text.lower()
+        for block in text_dict.get("blocks", []):
+            lines = block.get("lines")
+            if not lines:
+                continue
+            for line in lines:
+                spans = line.get("spans")
+                if not spans:
+                    continue
+                line_rect = fitz.Rect(line["bbox"])
+                if not line_rect.intersects(rect):
+                    continue
+                line_text = "".join(span.get("text", "") for span in spans)
+                haystack = line_text if case_sensitive else line_text.lower()
+                idx = haystack.find(search_term)
+                if idx == -1:
+                    continue
+                # Build new line text with substitution
+                new_line_text = line_text[:idx] + replace_text + line_text[idx + len(search_text):]
+                # Clear existing line content using redaction to remove original glyphs
+                try:
+                    redact = page.add_redact_annot(line_rect, fill=(1, 1, 1))
+                    redact.update()
+                    page.apply_redactions()
+                except Exception:
+                    # Fallback to drawing a filled rectangle if redaction fails
+                    page.draw_rect(line_rect, color=(1, 1, 1), fill=(1, 1, 1))
+                base_span = spans[0]
+                fontname = base_span.get("font", "helv")
+                fontsize = base_span.get("size", 12)
+                if fontname in ["Calibri", "Calibri-Bold", "Calibri-Italic"]:
+                    fontname = "helv"
+                text_color = (0, 0, 0)
+                if matching_instance and matching_instance.color:
+                    text_color = matching_instance.color
+                # Estimate baseline using span bbox bottom
+                baseline_y = min(span["bbox"][3] for span in spans)
+                page.insert_text(
+                    (line_rect.x0, baseline_y),
+                    new_line_text,
+                    fontname=fontname,
+                    fontsize=fontsize,
+                    color=text_color
+                )
+                return True
+        return False
     
     def replace_text_smart(self, search_text: str, replace_text: str) -> int:
         """Smart replacement method that handles complex text substitutions intelligently"""

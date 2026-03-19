@@ -83,6 +83,35 @@ python3 main_launcher.py --tui
 python3 main_launcher.py --cli
 ```
 
+### Opção 3: Executáveis Standalone (PyInstaller)
+
+Para usuários finais que não querem instalar dependências, gere ou utilize os binários em `dist/`:
+
+```bash
+# GUI (sem terminal)
+./dist/pdf_editor_gui/pdf_editor_gui
+
+# TUI (terminal)
+./dist/pdf_editor_tui/pdf_editor_tui
+```
+
+> Dica: no Linux talvez seja necessário liberar execução com `chmod +x dist/pdf_editor_gui/pdf_editor_gui`.
+
+Ambos os pacotes já incluem `core/`, `docs/` e `pdfs/`, garantindo a mesma experiência das interfaces originais.
+
+### Automação Rápida (scripts/common_replacements.py)
+
+Para casos recorrentes — como atualizar nome, idade e data em atestados — utilize o novo script:
+
+```bash
+python3 scripts/common_replacements.py input.pdf output.pdf \
+  --name "Elton Trindade dos Santos" \
+  --issue-date "Niterói, 10 de março de 2026." \
+  --method layout-preserving
+```
+
+Também é possível carregar um JSON com operações personalizadas via `--config configs/meu_fluxo.json`.
+
 ---
 
 ## 📖 Exemplos de Uso

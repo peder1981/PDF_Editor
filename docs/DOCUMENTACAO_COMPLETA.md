@@ -106,6 +106,27 @@ python3 -m interfaces.cli replace documento.pdf \
 - Guias detalhados por interface
 - Resultados de testes e correções aplicadas
 
+### **Distribuição e Automação**
+
+#### **Executáveis Standalone (PyInstaller)**
+- Localizados em `dist/pdf_editor_gui/` e `dist/pdf_editor_tui/`
+- Incluem `core/`, `docs/` e `pdfs/`
+- Executam sem necessidade de instalar dependências (`./dist/pdf_editor_gui/pdf_editor_gui`)
+- Caso necessário, libere permissão com `chmod +x dist/pdf_editor_gui/pdf_editor_gui`
+
+#### **Script de Substituições Comuns**
+- Arquivo: `scripts/common_replacements.py`
+- Automatiza campos recorrentes em atestados (nome, nascimento, idade, data/atividade)
+- Suporta `--config arquivo.json` para operações personalizadas
+- Permite escolher método: `exact`, `layout-preserving`, `background-preserving`
+- Exemplo:
+  ```bash
+  python3 scripts/common_replacements.py entrada.pdf saida.pdf \
+    --name "Novo Paciente" \
+    --issue-date "Niterói, 10 de março de 2026." \
+    --method layout-preserving
+  ```
+
 ### **Correções Recentes e Testes**
 
 #### **Correções Aplicadas**

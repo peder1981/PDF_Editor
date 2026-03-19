@@ -331,7 +331,7 @@ class TestBatchProcessor(unittest.TestCase):
         result = self.processor.get_job_status(999)
         self.assertIsNone(result)
     
-    @patch('pdf_editor.PDFEditor')
+    @patch('core.batch_processor.PDFEditor')
     def test_process_jobs_mock(self, mock_pdf_editor_class):
         """Test processing jobs with mocked PDFEditor"""
         # Setup mock

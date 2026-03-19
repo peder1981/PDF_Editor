@@ -529,21 +529,7 @@ if __name__ == "__main__":
     modificado_path = sys.argv[2]
     
     comparar_pdfs(original_path, modificado_path)
-```
 
-**Uso:**
-```bash
-python3 comparar_pdfs.py documento.pdf output.pdf
-```
-
----
-
-## 🎯 Casos de Uso Reais
-
-### **Caso 1: Atualizar Contratos Anualmente**
-
-```python
-#!/usr/bin/env python3
 """
 Atualiza contratos com novo ano e empresa
 """
@@ -594,14 +580,7 @@ if __name__ == "__main__":
         "2024",
         "TechStart Inc."
     )
-```
 
----
-
-### **Caso 2: Processar Formulários de Inscrição**
-
-```python
-#!/usr/bin/env python3
 """
 Processa formulários de inscrição substituindo dados
 """
@@ -654,14 +633,7 @@ if __name__ == "__main__":
         "dados_saida.json",
         "formulario_preenchido.pdf"
     )
-```
 
----
-
-### **Caso 3: Gerar Relatórios Personalizados**
-
-```python
-#!/usr/bin/env python3
 """
 Gera relatórios personalizados substituindo dados
 """
@@ -709,16 +681,7 @@ if __name__ == "__main__":
         dados,
         f"relatorio_{datetime.now().strftime('%Y%m%d')}.pdf"
     )
-```
 
----
-
-## 📦 Scripts Prontos
-
-### **Script 1: Atualizador de Atestados**
-
-```python
-#!/usr/bin/env python3
 """
 Atualizador de Atestados Médicos
 """
