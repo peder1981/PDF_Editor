@@ -191,10 +191,10 @@ Escolha o método mais adequado para seu caso:
 
 ### Correções Recentes
 
-- ✅ Fixed TUI MountError - Removido yield statements de métodos auxiliares
-- ✅ Fixed TUI AttributeError - Adicionado query_one para acessar botões por ID
-- ✅ Added CLI support for layout-preserving and background-preserving methods
-- ✅ Fixed unit test import paths
+- ✅ Corrigido MountError na TUI - Removidos yield statements de métodos auxiliares
+- ✅ Corrigido AttributeError na TUI - Adicionado query_one para acessar botões por ID
+- ✅ Adicionado suporte a layout-preserving e background-preserving na CLI
+- ✅ Corrigidos caminhos de importação nos testes unitários
 
 ### Documentação Completa
 

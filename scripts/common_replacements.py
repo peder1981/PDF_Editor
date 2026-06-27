@@ -95,9 +95,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--case-sensitive", action="store_true", help="Força busca case sensitive nas substituições rápidas")
 
     for field, meta in DEFAULT_FIELDS.items():
-        parser.add_argument(f"--{field}", help=meta["help"])
+        flag = field.replace("_", "-")
+        parser.add_argument(f"--{flag}", dest=field, help=meta["help"])
         parser.add_argument(
-            f"--{field}-search",
+            f"--{flag}-search",
             dest=f"{field}_search",
             help=f"Texto original a ser buscado (default: {meta['search']!r})"
         )

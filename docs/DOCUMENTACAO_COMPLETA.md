@@ -130,42 +130,42 @@ python3 -m interfaces.cli replace documento.pdf \
 ### **Correções Recentes e Testes**
 
 #### **Correções Aplicadas**
-- ✅ **Fixed TUI MountError** - Removido yield statements de métodos auxiliares
+- ✅ **Corrigido MountError na TUI** - Removidos yield statements de métodos auxiliares
   - Métodos `_create_source_section()`, `_create_replacements_section()`, e `_create_process_section()` agora retornam widgets diretamente
   - Interface TUI carrega corretamente sem erros
 
-- ✅ **Fixed TUI AttributeError** - Adicionado query_one para acessar botões por ID
+- ✅ **Corrigido AttributeError na TUI** - Adicionado query_one para acessar botões por ID
   - Botões agora são acessados via `query_one("#button-id", Button)` em vez de referências self
   - Eventos de botões funcionam corretamente
 
-- ✅ **Added CLI support for layout-preserving and background-preserving**
+- ✅ **Adicionado suporte a layout-preserving e background-preserving na CLI**
   - Métodos `layout-preserving` e `background-preserving` agora funcionam em CLI
-  - Help text atualizado com novos métodos
+  - Texto de ajuda atualizado com os novos métodos
 
-- ✅ **Fixed unit test import paths**
-  - Import paths corrigidos para funcionar com nova estrutura do projeto
+- ✅ **Corrigidos caminhos de importação nos testes unitários**
+  - Caminhos corrigidos para funcionar com a nova estrutura do projeto
   - Testes unitários executam corretamente
 
 #### **Resultados de Testes**
 
-**TUI (Terminal User Interface)**
+**TUI (Interface de Terminal)**
 - ✅ Interface carrega corretamente
-- ✅ Botões funcionam (single-mode, batch-mode)
+- ✅ Botões funcionam (modo-único, modo-lote)
 - ✅ Abas funcionam (Origem & Destino, Substituições, Opções & Processar)
 - ✅ Navegação por teclado funciona
 
-**CLI (Command Line Interface)**
+**CLI (Interface de Linha de Comando)**
 - ✅ `--help` funciona
-- ✅ `info` comando funciona
-- ✅ `search` comando funciona
-- ✅ `replace` comando funciona com todos os métodos:
+- ✅ Comando `info` funciona
+- ✅ Comando `search` funciona
+- ✅ Comando `replace` funciona com todos os métodos:
   - `exact`
   - `comprehensive`
   - `structure`
   - `layout-preserving` ⭐
   - `background-preserving` ⭐
 
-**GUI (Graphical User Interface)**
+**GUI (Interface Gráfica)**
 - ✅ Interface gráfica abre corretamente
 - ✅ Todos os componentes visíveis
 
@@ -179,14 +179,14 @@ python3 -m interfaces.cli replace documento.pdf \
 - ✅ `get_document_info()` funciona
 - ✅ `save()` funciona
 
-**Unit Tests**
+**Testes Unitários**
 - ✅ 10/11 testes passaram
-- ❌ 1 teste falhou (test_replace_text_exact_method) - falha menor, não afeta funcionalidade principal
+- ❌ 1 teste falhou (test_replace_text_exact_method) - falha menor, não afeta a funcionalidade principal
 
 **Métodos de Preservação de Layout**
 - ✅ `layout-preserving` preserva gráficos e backgrounds
 - ✅ `background-preserving` preserva cores de fundo
-- ✅ Ambos métodos funcionam em CLI, GUI, TUI e API
+- ✅ Ambos os métodos funcionam em CLI, GUI, TUI e API
 
 #### 3. **`docs/DOCUMENTACAO_COMPLETA.md`** (este arquivo)
 - Documentação completa do projeto

@@ -44,12 +44,12 @@ pip install -r requirements.txt
 python3 -m interfaces.cli --help
 
 # Deve mostrar:
-# Advanced PDF Editor - Edit PDFs while preserving structure
+# PDF Editor Avançado - Edite PDFs preservando a estrutura
 ```
 
 ### **Correções Recentes**
 
-✅ **Added CLI support for layout-preserving and background-preserving**
+✅ **Adicionado suporte a layout-preserving e background-preserving na CLI**
 - Métodos `layout-preserving` e `background-preserving` agora funcionam em CLI
 - Help text atualizado com novos métodos
 - Todos os métodos de edição disponíveis via CLI:
@@ -183,15 +183,15 @@ python3 -m interfaces.cli search documento.pdf "texto.*novo"
 #### **Saída**
 
 ```
-Search Results: 'texto a buscar'
+Resultados da busca: 'texto a buscar'
 ┏━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━┳━━━━━━━━━━━━━━━━┓
-┃ Page ┃ Text                                                         ┃ Font      ┃ Size ┃ Position       ┃
+┃ Pág. ┃ Texto                                                        ┃ Fonte     ┃ Tam. ┃ Posição        ┃
 ┡━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━╇━━━━━━━━━━━━━━━━┩
 │    1 │ texto a buscar encontrado aqui...                              │ Helvetica │ 11.0 │ (110.5, 156.0) │
 │    2 │ outra ocorrência do texto a buscar...                          │ Helvetica │ 11.0 │ (110.5, 200.0) │
 └──────┴──────────────────────────────────────────────────────────────┴───────────┴──────┴────────────────┘
 
-Found 2 instances
+2 ocorrência(s) encontrada(s)
 ```
 
 ---
@@ -222,22 +222,22 @@ python3 -m interfaces.cli info documento.pdf
 #### **Saída**
 
 ```
-📄 Document Information
+📄 Informações do Documento
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-📊 Page Count: 5
-📝 Text Instances: 127
-📦 File Size: 2.5 MB
+📊 Número de páginas: 5
+📝 Instâncias de texto: 127
+📦 Tamanho do arquivo: 2,5 MB
 
-📋 Metadata:
-  Title: Meu Documento
-  Author: João Silva
-  Subject: Documento Importante
-  Keywords: pdf, editor, teste
-  Creator: PDF Editor
-  Producer: PyMuPDF
-  CreationDate: 2026-03-16
-  ModDate: 2026-03-16
+📋 Metadados:
+  Título: Meu Documento
+  Autor: João Silva
+  Assunto: Documento Importante
+  Palavras-chave: pdf, editor, teste
+  Criador: PDF Editor
+  Produtor: PyMuPDF
+  Data de criação: 2026-03-16
+  Data de modificação: 2026-03-16
 ```
 
 ---
