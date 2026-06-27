@@ -303,31 +303,5 @@ def create_sample_config():
     console.print("[cyan]pdf-editor batch input.pdf sample_replacements.json[/cyan]")
 
 
-@app.command()
-def tui():
-    """Launch the Terminal User Interface"""
-    try:
-        sys.path.insert(0, str(Path(__file__).parent))
-        from tui import PDFEditorTUI
-        app_tui = PDFEditorTUI()
-        app_tui.run()
-    except ImportError:
-        console.print("[red]TUI not available. Install textual: pip install textual[/red]")
-        raise typer.Exit(1)
-
-
-@app.command()
-def gui():
-    """Launch the Graphical User Interface"""
-    try:
-        sys.path.insert(0, str(Path(__file__).parent))
-        from gui import PDFEditorGUI
-        app_gui = PDFEditorGUI()
-        app_gui.run()
-    except ImportError:
-        console.print("[red]GUI not available. Install required packages[/red]")
-        raise typer.Exit(1)
-
-
 if __name__ == "__main__":
     app()

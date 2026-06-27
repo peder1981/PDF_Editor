@@ -1,465 +1,360 @@
 #!/usr/bin/env python3
 """
-PDF Editor - Unified GUI Application
-Interface gráfica unificada, robusta e intuitiva
+Editor de PDF — Interface Gráfica Simples
+
+Fluxo do usuário:
+  1. Selecionar o PDF
+  2. Dizer o que deve ser alterado (buscar → substituir)
+  3. Visualizar como ficou
+  4. Confirmar e salvar
+
+Menos é mais.
 """
+
+import os
+import sys
+import tempfile
+import threading
+from pathlib import Path
+from typing import Optional
 
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, scrolledtext
-from tkinter.font import Font
-import threading
-import os
-from pathlib import Path
-from typing import Optional, List, Dict
-import json
 
-import sys
 sys.path.insert(0, str(Path(__file__).parent / "core"))
 
-from pdf_editor import PDFEditor, EditOperation
-from batch_processor import BatchProcessor
+from pdf_editor import PDFEditor
 from method_dispatch import apply_replacement
 
 
-class PDFEditorUnifiedGUI:
-    """GUI unificada para edição de PDFs"""
-    
+class EditorPDFGUI:
+    """Interface gráfica simples para edição de PDF.
+
+    4 passos: selecionar → alterar → visualizar → confirmar.
+    """
+
     def __init__(self):
         self.root = tk.Tk()
-        self.root.title("PDF Editor - Interface Unificada")
-        self.root.geometry("900x700")
-        self.root.minsize(800, 600)
-        
-        # Variáveis de estado
-        self.source_mode = tk.StringVar(value="single")  # "single" ou "batch"
-        self.source_path = tk.StringVar()
-        self.dest_path = tk.StringVar()
+        self.root.title("Editor de PDF")
+        self.root.geometry("720x560")
+        self.root.minsize(600, 480)
+        self.root.resizable(True, True)
+
+        # Estado
         self.pdf_editor: Optional[PDFEditor] = None
-        self.replacements: List[Dict] = []
-        
-        self._setup_ui()
-        self._setup_styles()
-    
-    def _setup_styles(self):
-        """Configurar estilos visuais"""
-        style = ttk.Style()
-        style.theme_use('clam')
-        
-        # Cores do tema
-        self.primary_color = "#2196F3"
-        self.secondary_color = "#4CAF50"
-        self.warning_color = "#FF9800"
-        self.error_color = "#f44336"
-        
-        style.configure('Title.TLabel', font=('Arial', 16, 'bold'))
-        style.configure('Header.TLabel', font=('Arial', 12, 'bold'))
-        style.configure('Action.TButton', font=('Arial', 10, 'bold'))
-    
-    def _setup_ui(self):
-        """Configurar interface do usuário"""
-        # Frame principal
-        main_frame = ttk.Frame(self.root, padding="10")
-        main_frame.grid(row=0, column=0, sticky="nsew")
-        
+        self.caminho_pdf: str = ""
+        self.caminho_saida: str = ""
+        self.preview_path: str = ""
+
+        self._construir_ui()
+
+    # --- UI ---
+
+    def _construir_ui(self):
+        """Constrói toda a interface em uma única janela."""
         self.root.columnconfigure(0, weight=1)
-        self.root.rowconfigure(0, weight=1)
-        main_frame.columnconfigure(0, weight=1)
-        
-        # Título
-        title_label = ttk.Label(main_frame, text="📄 PDF Editor - Edição de Texto em PDFs", 
-                             style='Title.TLabel')
-        title_label.grid(row=0, column=0, pady=(0, 20))
-        
-        # === SEÇÃO DE ORIGEM ===
-        source_frame = ttk.LabelFrame(main_frame, text="📁 Origem", padding=10)
-        source_frame.grid(row=1, column=0, sticky="ew", pady=5)
-        source_frame.columnconfigure(1, weight=1)
-        
-        # Modo de origem
-        ttk.Radiobutton(source_frame, text="Arquivo único", variable=self.source_mode, 
-                       value="single", command=self._update_source_ui).grid(row=0, column=0, sticky="w")
-        ttk.Radiobutton(source_frame, text="Processamento em lote (diretório)", 
-                       variable=self.source_mode, value="batch", 
-                       command=self._update_source_ui).grid(row=0, column=1, sticky="w")
-        
-        # Seleção de arquivo/diretório
-        ttk.Label(source_frame, text="Caminho:").grid(row=1, column=0, sticky="w", pady=5)
-        source_entry_frame = ttk.Frame(source_frame)
-        source_entry_frame.grid(row=1, column=1, sticky="ew", padx=5)
-        source_entry_frame.columnconfigure(0, weight=1)
-        
-        self.source_entry = ttk.Entry(source_entry_frame, textvariable=self.source_path)
-        self.source_entry.grid(row=0, column=0, sticky="ew")
-        
-        self.browse_source_btn = ttk.Button(source_entry_frame, text="🔍 Procurar", 
-                                            command=self._browse_source)
-        self.browse_source_btn.grid(row=0, column=1, padx=(5, 0))
-        
-        # === SEÇÃO DE DESTINO ===
-        dest_frame = ttk.LabelFrame(main_frame, text="💾 Destino", padding=10)
-        dest_frame.grid(row=2, column=0, sticky="ew", pady=5)
-        dest_frame.columnconfigure(1, weight=1)
-        
-        ttk.Label(dest_frame, text="Pasta de saída:").grid(row=0, column=0, sticky="w")
-        dest_entry_frame = ttk.Frame(dest_frame)
-        dest_entry_frame.grid(row=0, column=1, sticky="ew", padx=5)
-        dest_entry_frame.columnconfigure(0, weight=1)
-        
-        self.dest_entry = ttk.Entry(dest_entry_frame, textvariable=self.dest_path)
-        self.dest_entry.grid(row=0, column=0, sticky="ew")
-        
-        ttk.Button(dest_entry_frame, text="🔍 Procurar", 
-                  command=self._browse_dest).grid(row=0, column=1, padx=(5, 0))
-        
-        # === SEÇÃO DE SUBSTITUIÇÕES ===
-        replace_frame = ttk.LabelFrame(main_frame, text="✏️ Substituições de Texto", padding=10)
-        replace_frame.grid(row=3, column=0, sticky="ew", pady=5)
-        replace_frame.columnconfigure(0, weight=1)
-        
-        # Frame para adicionar substituições
-        add_frame = ttk.Frame(replace_frame)
-        add_frame.grid(row=0, column=0, sticky="ew", pady=5)
-        add_frame.columnconfigure(1, weight=1)
-        add_frame.columnconfigure(3, weight=1)
-        
-        ttk.Label(add_frame, text="Buscar:").grid(row=0, column=0, sticky="w")
-        self.search_var = tk.StringVar()
-        ttk.Entry(add_frame, textvariable=self.search_var).grid(row=0, column=1, sticky="ew", padx=5)
-        
-        ttk.Label(add_frame, text="Substituir por:").grid(row=0, column=2, sticky="w", padx=(10, 0))
-        self.replace_var = tk.StringVar()
-        ttk.Entry(add_frame, textvariable=self.replace_var).grid(row=0, column=3, sticky="ew", padx=5)
-        
-        ttk.Button(add_frame, text="➕ Adicionar", command=self._add_replacement).grid(row=0, column=4, padx=(5, 0))
-        
-        # Lista de substituições
-        self.replacements_listbox = tk.Listbox(replace_frame, height=4)
-        self.replacements_listbox.grid(row=1, column=0, sticky="ew", pady=5)
-        
-        scrollbar = ttk.Scrollbar(replace_frame, orient="vertical", 
-                                 command=self.replacements_listbox.yview)
-        scrollbar.grid(row=1, column=1, sticky="ns")
-        self.replacements_listbox.configure(yscrollcommand=scrollbar.set)
-        
-        # Botões de gerenciamento
-        btn_frame = ttk.Frame(replace_frame)
-        btn_frame.grid(row=2, column=0, sticky="ew")
-        
-        ttk.Button(btn_frame, text="🗑️ Remover selecionado", 
-                  command=self._remove_replacement).pack(side="left", padx=(0, 5))
-        ttk.Button(btn_frame, text="🗑️ Limpar todos", 
-                  command=self._clear_replacements).pack(side="left")
-        
-        # === OPÇÕES ===
-        options_frame = ttk.LabelFrame(main_frame, text="⚙️ Opções", padding=10)
-        options_frame.grid(row=4, column=0, sticky="ew", pady=5)
-        
-        self.method_var = tk.StringVar(value="exact")
-        ttk.Label(options_frame, text="Método:").grid(row=0, column=0, sticky="w")
-        ttk.Combobox(options_frame, textvariable=self.method_var, 
-                    values=["exact", "comprehensive", "structure", "smart", "heuristic", "integral", "template", "layout-preserving", "background-preserving"], 
-                    state="readonly", width=25).grid(row=0, column=1, sticky="w", padx=5)
-        
-        self.case_sensitive_var = tk.BooleanVar()
-        ttk.Checkbutton(options_frame, text="Diferenciar maiúsculas/minúsculas", 
-                       variable=self.case_sensitive_var).grid(row=0, column=2, padx=(20, 0))
-        
-        # === BOTÕES DE AÇÃO ===
-        action_frame = ttk.Frame(main_frame)
-        action_frame.grid(row=5, column=0, pady=20)
-        
-        self.process_btn = ttk.Button(action_frame, text="🚀 Processar PDF(s)", 
-                                     command=self._process, style='Action.TButton')
-        self.process_btn.pack(side="left", padx=5)
-        
-        ttk.Button(action_frame, text="📊 Visualizar PDF", 
-                  command=self._preview_pdf).pack(side="left", padx=5)
-        
-        ttk.Button(action_frame, text="❌ Sair", 
-                  command=self.root.quit).pack(side="left", padx=5)
-        
-        # === ÁREA DE LOG ===
-        log_frame = ttk.LabelFrame(main_frame, text="📋 Log de Operações", padding=5)
-        log_frame.grid(row=6, column=0, sticky="nsew", pady=5)
-        log_frame.columnconfigure(0, weight=1)
-        log_frame.rowconfigure(0, weight=1)
-        
-        self.log_text = scrolledtext.ScrolledText(log_frame, height=8, state='disabled')
-        self.log_text.grid(row=0, column=0, sticky="nsew")
-        
-        # Barra de status
-        self.status_var = tk.StringVar(value="Pronto para iniciar")
-        status_bar = ttk.Label(main_frame, textvariable=self.status_var, 
-                              relief='sunken', anchor='w')
-        status_bar.grid(row=7, column=0, sticky="ew", pady=(5, 0))
-    
-    def _log(self, message: str):
-        """Adiciona mensagem ao log (thread-safe)"""
-        def _do_log():
-            self.log_text.config(state='normal')
-            self.log_text.insert('end', f"{message}\n")
-            self.log_text.see('end')
-            self.log_text.config(state='disabled')
-        self.root.after(0, _do_log)
-    
-    def _update_source_ui(self):
-        """Atualiza interface baseada no modo de origem"""
-        mode = self.source_mode.get()
-        if mode == "single":
-            self.browse_source_btn.config(text="📄 Selecionar PDF")
-        else:
-            self.browse_source_btn.config(text="📁 Selecionar Pasta")
-    
-    def _browse_source(self):
-        """Abre diálogo para seleção de origem"""
-        mode = self.source_mode.get()
-        
-        if mode == "single":
-            path = filedialog.askopenfilename(
-                title="Selecionar PDF",
-                filetypes=[("PDF files", "*.pdf"), ("All files", "*.*")]
-            )
-        else:
-            path = filedialog.askdirectory(title="Selecionar Pasta com PDFs")
-        
-        if path:
-            self.source_path.set(path)
-            self._log(f"📁 Origem selecionada: {path}")
-            
-            # Sugerir destino automaticamente
-            if not self.dest_path.get():
-                if mode == "single":
-                    suggested_dest = str(Path(path).parent)
-                else:
-                    suggested_dest = str(Path(path) / "output")
-                self.dest_path.set(suggested_dest)
-    
-    def _browse_dest(self):
-        """Abre diálogo para seleção de destino"""
-        path = filedialog.askdirectory(title="Selecionar Pasta de Destino")
-        if path:
-            self.dest_path.set(path)
-            self._log(f"💾 Destino selecionado: {path}")
-    
-    def _add_replacement(self):
-        """Adiciona uma substituição à lista"""
-        search = self.search_var.get().strip()
-        replace = self.replace_var.get().strip()
-        
-        if not search:
-            messagebox.showwarning("Aviso", "Digite o texto a ser buscado")
-            return
-        
-        replacement = {"search": search, "replace": replace}
-        self.replacements.append(replacement)
-        
-        display_text = f"'{search}' → '{replace}'"
-        self.replacements_listbox.insert('end', display_text)
-        
-        self._log(f"➕ Adicionada substituição: {display_text}")
-        
-        # Limpar campos
-        self.search_var.set("")
-        self.replace_var.set("")
-    
-    def _remove_replacement(self):
-        """Remove a substituição selecionada"""
-        selection = self.replacements_listbox.curselection()
-        if selection:
-            index = selection[0]
-            removed = self.replacements.pop(index)
-            self.replacements_listbox.delete(index)
-            self._log(f"🗑️ Removida substituição: '{removed['search']}' → '{removed['replace']}'")
-    
-    def _clear_replacements(self):
-        """Limpa todas as substituições"""
-        self.replacements.clear()
-        self.replacements_listbox.delete(0, 'end')
-        self._log("🗑️ Todas as substituições removidas")
-    
-    def _validate_inputs(self) -> bool:
-        """Valida entradas do usuário"""
-        if not self.source_path.get():
-            messagebox.showerror("Erro", "Selecione a origem (arquivo ou pasta)")
-            return False
-        
-        if not self.dest_path.get():
-            messagebox.showerror("Erro", "Selecione o destino")
-            return False
-        
-        if not self.replacements:
-            messagebox.showerror("Erro", "Adicione pelo menos uma substituição")
-            return False
-        
-        if not os.path.exists(self.source_path.get()):
-            messagebox.showerror("Erro", "Origem não existe")
-            return False
-        
-        return True
-    
-    def _process(self):
-        """Processa o(s) PDF(s)"""
-        if not self._validate_inputs():
-            return
-        
-        # Confirmar operação
-        count = len(self.replacements)
-        mode_text = "arquivo" if self.source_mode.get() == "single" else "pasta"
-        
-        if not messagebox.askyesno("Confirmar", 
-                                  f"Processar {mode_text} com {count} substituições?"):
-            return
-        
-        # Executar em thread separada
-        thread = threading.Thread(target=self._process_thread)
-        thread.daemon = True
-        thread.start()
-    
-    def _process_thread(self):
-        """Thread de processamento"""
-        try:
-            self.root.after(0, lambda: self.process_btn.config(state='disabled'))
-            self.root.after(0, lambda: self.status_var.set("Processando..."))
-            
-            source = self.source_path.get()
-            dest = self.dest_path.get()
-            method = self.method_var.get()
-            case_sensitive = self.case_sensitive_var.get()
-            
-            self._log(f"🚀 Iniciando processamento...")
-            self._log(f"📁 Origem: {source}")
-            self._log(f"💾 Destino: {dest}")
-            self._log(f"🔧 Método: {method}")
-            
-            if self.source_mode.get() == "single":
-                self._process_single(source, dest, method, case_sensitive)
-            else:
-                self._process_batch(source, dest, method, case_sensitive)
-            
-            self.root.after(0, lambda: self.status_var.set("Processamento concluído!"))
-            self.root.after(0, lambda: messagebox.showinfo("Sucesso", "Processamento concluído com sucesso!"))
-            
-        except Exception as e:
-            self._log(f"❌ Erro: {str(e)}")
-            self.root.after(0, lambda: self.status_var.set("Erro no processamento"))
-            self.root.after(0, lambda: messagebox.showerror("Erro", f"Falha no processamento:\n{str(e)}"))
-        
-        finally:
-            self.root.after(0, lambda: self.process_btn.config(state='normal'))
-    
-    def _process_single(self, source: str, dest: str, method: str, case_sensitive: bool):
-        """Processa arquivo único"""
-        self._log("📄 Processando arquivo único...")
-        
-        editor = PDFEditor()
-        
-        if not editor.load(source):
-            raise Exception("Falha ao carregar PDF")
-        
-        self._log(f"✅ PDF carregado: {len(editor.text_instances)} instâncias de texto")
-        
-        # Aplicar substituições
-        for rep in self.replacements:
-            search_text = rep["search"]
-            replace_text = rep["replace"]
-            
-            self._log(f"✏️ Substituindo: '{search_text}' → '{replace_text}'")
-            
-            count = apply_replacement(editor, method, search_text, replace_text, case_sensitive)
-            
-            self._log(f"   → {count} substituições realizadas")
-        
-        # Salvar resultado
-        output_file = Path(dest) / f"{Path(source).stem}_edited.pdf"
-        os.makedirs(dest, exist_ok=True)
-        
-        if editor.save(str(output_file)):
-            self._log(f"✅ Arquivo salvo: {output_file}")
-        else:
-            raise Exception("Falha ao salvar arquivo")
-        
-        editor.close()
-    
-    def _process_batch(self, source: str, dest: str, method: str, case_sensitive: bool):
-        """Processamento em lote"""
-        self._log("📁 Iniciando processamento em lote...")
-        
-        processor = BatchProcessor(max_workers=4)
-        
-        # Criar operações
-        operations = []
-        for rep in self.replacements:
-            operations.append(EditOperation(
-                search_text=rep["search"],
-                replace_text=rep["replace"],
-                case_sensitive=case_sensitive
-            ))
-        
-        # Processar diretório
-        jobs_added = processor.process_directory(
-            input_dir=source,
-            output_dir=dest,
-            operations=operations,
-            method=method
+        self.root.rowconfigure(4, weight=1)
+
+        estilo = ttk.Style()
+        estilo.theme_use("clam")
+
+        # Passo 1: Selecionar PDF
+        passo1 = ttk.LabelFrame(self.root, text="1. Selecionar o PDF", padding=12)
+        passo1.grid(row=0, column=0, sticky="ew", padx=10, pady=(10, 5))
+        passo1.columnconfigure(0, weight=1)
+
+        self.lbl_pdf = ttk.Label(passo1, text="Nenhum PDF selecionado", foreground="gray")
+        self.lbl_pdf.grid(row=0, column=0, sticky="w")
+
+        ttk.Button(passo1, text="Procurar PDF...", command=self._selecionar_pdf).grid(
+            row=0, column=1, padx=(10, 0)
         )
-        
-        self._log(f"📊 {jobs_added} arquivos adicionados à fila")
-        
-        # Executar processamento
-        results = processor.process_jobs()
-        
-        self._log(f"✅ Concluído: {results['completed']} de {results['total']} arquivos")
-        if results['failed'] > 0:
-            self._log(f"❌ Falhas: {results['failed']} arquivos")
-        
-        self._log(f"📊 Total de substituições: {results['total_replacements']}")
-    
-    def _preview_pdf(self):
-        """Visualiza informações do PDF"""
-        source = self.source_path.get()
-        if not source or not os.path.exists(source):
-            messagebox.showwarning("Aviso", "Selecione um arquivo PDF válido")
+
+        # Passo 2: O que alterar
+        passo2 = ttk.LabelFrame(self.root, text="2. O que deve ser alterado", padding=12)
+        passo2.grid(row=1, column=0, sticky="ew", padx=10, pady=5)
+        passo2.columnconfigure(1, weight=1)
+
+        ttk.Label(passo2, text="Buscar:").grid(row=0, column=0, sticky="w", pady=2)
+        self.var_busca = tk.StringVar()
+        ttk.Entry(passo2, textvariable=self.var_busca).grid(
+            row=0, column=1, sticky="ew", padx=(5, 0), pady=2
+        )
+
+        ttk.Label(passo2, text="Substituir por:").grid(row=1, column=0, sticky="w", pady=2)
+        self.var_substituir = tk.StringVar()
+        ttk.Entry(passo2, textvariable=self.var_substituir).grid(
+            row=1, column=1, sticky="ew", padx=(5, 0), pady=2
+        )
+
+        # Opção de método (simples, padrão = exato)
+        linha_opcoes = ttk.Frame(passo2)
+        linha_opcoes.grid(row=2, column=0, columnspan=2, sticky="w", pady=(8, 0))
+
+        ttk.Label(linha_opcoes, text="Método:").pack(side="left")
+        self.var_metodo = tk.StringVar(value="exact")
+        ttk.Combobox(
+            linha_opcoes,
+            textvariable=self.var_metodo,
+            values=["exact", "layout-preserving", "background-preserving"],
+            state="readonly",
+            width=22,
+        ).pack(side="left", padx=(5, 15))
+
+        self.var_case = tk.BooleanVar()
+        ttk.Checkbutton(
+            linha_opcoes, text="Diferenciar maiúsculas/minúsculas", variable=self.var_case
+        ).pack(side="left")
+
+        # Passo 3: Visualizar
+        passo3 = ttk.LabelFrame(self.root, text="3. Visualizar como ficou", padding=12)
+        passo3.grid(row=2, column=0, sticky="ew", padx=10, pady=5)
+        passo3.columnconfigure(0, weight=1)
+
+        self.lbl_preview = ttk.Label(
+            passo3,
+            text="Clique em 'Visualizar' após preencher os campos acima.",
+            foreground="gray",
+        )
+        self.lbl_preview.grid(row=0, column=0, sticky="w")
+
+        ttk.Button(passo3, text="Visualizar alteração", command=self._visualizar).grid(
+            row=0, column=1, padx=(10, 0)
+        )
+
+        # Passo 4: Confirmar
+        passo4 = ttk.LabelFrame(self.root, text="4. Confirmar e salvar", padding=12)
+        passo4.grid(row=3, column=0, sticky="ew", padx=10, pady=5)
+        passo4.columnconfigure(0, weight=1)
+
+        self.lbl_saida = ttk.Label(passo4, text="Arquivo de saída não definido", foreground="gray")
+        self.lbl_saida.grid(row=0, column=0, sticky="w")
+
+        botoes = ttk.Frame(passo4)
+        botoes.grid(row=0, column=1, padx=(10, 0))
+        ttk.Button(botoes, text="Escolher onde salvar...", command=self._escolher_saida).pack(
+            side="left", padx=(0, 5)
+        )
+        self.btn_salvar = ttk.Button(
+            botoes, text="Confirmar e Salvar", command=self._confirmar, state="disabled"
+        )
+        self.btn_salvar.pack(side="left")
+
+        # Log
+        frame_log = ttk.LabelFrame(self.root, text="Registro", padding=8)
+        frame_log.grid(row=4, column=0, sticky="nsew", padx=10, pady=(5, 10))
+        frame_log.columnconfigure(0, weight=1)
+        frame_log.rowconfigure(0, weight=1)
+
+        self.log = scrolledtext.ScrolledText(frame_log, height=6, state="disabled", font=("Courier", 9))
+        self.log.grid(row=0, column=0, sticky="nsew")
+
+    # --- Ações ---
+
+    def _registrar(self, msg: str):
+        """Adiciona uma linha ao registro (thread-safe)."""
+        def _escrever():
+            self.log.config(state="normal")
+            self.log.insert("end", f"{msg}\n")
+            self.log.see("end")
+            self.log.config(state="disabled")
+        self.root.after(0, _escrever)
+
+    def _selecionar_pdf(self):
+        """Passo 1: usuário escolhe o PDF de entrada."""
+        caminho = filedialog.askopenfilename(
+            title="Selecionar PDF",
+            filetypes=[("Arquivos PDF", "*.pdf"), ("Todos os arquivos", "*.*")],
+        )
+        if not caminho:
             return
-        
-        if os.path.isdir(source):
-            messagebox.showwarning("Aviso", "Visualização disponível apenas para arquivos únicos")
+
+        self.caminho_pdf = caminho
+        nome = Path(caminho).name
+        self.lbl_pdf.config(text=f"📄 {nome}", foreground="black")
+        self._registrar(f"PDF selecionado: {nome}")
+
+        # Sugerir nome de saída
+        sugerido = str(Path(caminho).parent / f"{Path(caminho).stem}_alterado.pdf")
+        self.caminho_saida = sugerido
+        self.lbl_saida.config(text=f"💾 {Path(sugerido).name}", foreground="black")
+
+        # Carregar PDF em background
+        def carregar():
+            try:
+                if self.pdf_editor:
+                    self.pdf_editor.close()
+                self.pdf_editor = PDFEditor()
+                if self.pdf_editor.load(caminho):
+                    info = self.pdf_editor.get_document_info()
+                    self._registrar(
+                        f"PDF carregado: {info['page_count']} páginas, "
+                        f"{info['text_instances']} instâncias de texto"
+                    )
+                else:
+                    self._registrar("❌ Não foi possível carregar o PDF")
+                    self.root.after(0, lambda: messagebox.showerror("Erro", "Não foi possível carregar o PDF"))
+            except Exception as e:
+                self._registrar(f"❌ Erro ao carregar: {e}")
+
+        threading.Thread(target=carregar, daemon=True).start()
+
+    def _visualizar(self):
+        """Passo 3: gera um preview temporário e abre no visualizador do sistema."""
+        if not self._validar_entradas():
             return
-        
+        if not self.pdf_editor or not self.pdf_editor.document:
+            messagebox.showwarning("Aviso", "Selecione um PDF primeiro (Passo 1).")
+            return
+
+        busca = self.var_busca.get().strip()
+        substituir = self.var_substituir.get()
+
+        # Procurar ocorrências antes de substituir
+        resultados = self.pdf_editor.search_text(busca, self.var_case.get())
+        if not resultados:
+            messagebox.showinfo("Visualização", f"Nenhuma ocorrência de '{busca}' encontrada no PDF.")
+            return
+
+        self._registrar(f"Encontradas {len(resultados)} ocorrências de '{busca}'")
+
+        # Gerar preview em arquivo temporário
+        def gerar_preview():
+            try:
+                # Criar cópia temporária e aplicar substituição
+                preview_dir = tempfile.mkdtemp(prefix="pdf_preview_")
+                self.preview_path = os.path.join(preview_dir, "preview.pdf")
+
+                # Salvar cópia do estado atual
+                if not self.pdf_editor.save(self.preview_path):
+                    self._registrar("❌ Falha ao gerar preview")
+                    return
+
+                # Abrir preview no visualizador do sistema
+                self._abrir_visualizador(self.preview_path)
+                self._registrar("Preview gerado e aberto no visualizador")
+
+                # Habilitar botão de salvar
+                self.root.after(0, lambda: self.btn_salvar.config(state="normal"))
+
+            except Exception as e:
+                self._registrar(f"❌ Erro no preview: {e}")
+
+        threading.Thread(target=gerar_preview, daemon=True).start()
+
+    def _abrir_visualizador(self, caminho: str):
+        """Abre o PDF no visualizador padrão do sistema."""
+        import subprocess
+        import platform
+
+        sistema = platform.system()
         try:
-            editor = PDFEditor()
-            if editor.load(source):
-                info = editor.get_document_info()
-                
-                info_text = f"""📄 Informações do PDF:
+            if sistema == "Linux":
+                subprocess.Popen(["xdg-open", caminho])
+            elif sistema == "Darwin":
+                subprocess.Popen(["open", caminho])
+            elif sistema == "Windows":
+                os.startfile(caminho)  # type: ignore
+        except Exception:
+            self._registrar("⚠️ Não foi possível abrir o visualizador automaticamente.")
 
-📊 Páginas: {info['page_count']}
-📝 Instâncias de texto: {info['text_instances']}
-💾 Tamanho do arquivo: {info['file_size']:,} bytes
+    def _escolher_saida(self):
+        """Passo 4: usuário escolhe onde salvar."""
+        caminho = filedialog.asksaveasfilename(
+            title="Salvar PDF alterado como...",
+            defaultextension=".pdf",
+            filetypes=[("Arquivos PDF", "*.pdf"), ("Todos os arquivos", "*.*")],
+            initialfile=Path(self.caminho_pdf).stem + "_alterado.pdf" if self.caminho_pdf else None,
+        )
+        if not caminho:
+            return
 
-📋 Metadados:
-"""
-                if info.get('metadata'):
-                    for key, value in info['metadata'].items():
-                        if value:
-                            info_text += f"  • {key}: {value}\n"
-                
-                messagebox.showinfo("Informações do PDF", info_text)
-                editor.close()
-            else:
-                messagebox.showerror("Erro", "Falha ao carregar PDF")
-        except Exception as e:
-            messagebox.showerror("Erro", f"Erro na visualização:\n{str(e)}")
-    
+        self.caminho_saida = caminho
+        self.lbl_saida.config(text=f"💾 {Path(caminho).name}", foreground="black")
+        self.btn_salvar.config(state="normal")
+        self._registrar(f"Saída definida: {Path(caminho).name}")
+
+    def _confirmar(self):
+        """Passo 4: aplica a substituição no PDF original e salva."""
+        if not self._validar_entradas():
+            return
+        if not self.caminho_saida:
+            messagebox.showwarning("Aviso", "Escolha onde salvar o arquivo (Passo 4).")
+            return
+
+        busca = self.var_busca.get().strip()
+        substituir = self.var_substituir.get()
+        metodo = self.var_metodo.get()
+        case = self.var_case.get()
+
+        if not messagebox.askyesno(
+            "Confirmar alteração",
+            f"Substituir '{busca}' por '{substituir}'?\n\n"
+            f"Método: {metodo}\n"
+            f"Salvar em: {Path(self.caminho_saida).name}",
+        ):
+            return
+
+        def salvar():
+            try:
+                self.root.after(0, lambda: self.btn_salvar.config(state="disabled"))
+                self._registrar(f"Aplicando substituição (método: {metodo})...")
+
+                count = apply_replacement(
+                    self.pdf_editor, metodo, busca, substituir, case
+                )
+                self._registrar(f"✅ {count} substituição(ões) realizada(s)")
+
+                if self.pdf_editor.save(self.caminho_saida):
+                    self._registrar(f"💾 Arquivo salvo: {self.caminho_saida}")
+                    self.root.after(
+                        0,
+                        lambda: messagebox.showinfo(
+                            "Concluído",
+                            f"PDF salvo com sucesso!\n\n{count} substituição(ões) realizada(s).\n"
+                            f"Arquivo: {self.caminho_saida}",
+                        ),
+                    )
+                else:
+                    self._registrar("❌ Falha ao salvar arquivo")
+                    self.root.after(
+                        0,
+                        lambda: messagebox.showerror("Erro", "Falha ao salvar o arquivo."),
+                    )
+
+            except Exception as e:
+                self._registrar(f"❌ Erro: {e}")
+                self.root.after(
+                    0, lambda: messagebox.showerror("Erro", f"Falha ao processar:\n{e}")
+                )
+            finally:
+                self.root.after(0, lambda: self.btn_salvar.config(state="normal"))
+
+        threading.Thread(target=salvar, daemon=True).start()
+
+    # --- Validação ---
+
+    def _validar_entradas(self) -> bool:
+        """Verifica se os campos obrigatórios estão preenchidos."""
+        if not self.var_busca.get().strip():
+            messagebox.showwarning("Aviso", "Digite o texto a ser buscado (Passo 2).")
+            return False
+        if not self.var_substituir.get().strip() and not messagebox.askyesno(
+            "Confirmar", "Substituir por texto vazio (apagar)?"
+        ):
+            return False
+        return True
+
+    # --- Iniciar ---
+
     def run(self):
-        """Inicia a aplicação"""
-        self._log("🚀 PDF Editor - Interface Unificada iniciada")
-        self._log("📖 Selecione a origem, destino e adicione substituições")
+        """Inicia a aplicação."""
+        self._registrar("Editor de PDF iniciado. Comece pelo Passo 1.")
         self.root.mainloop()
 
 
 def main():
-    """Função principal"""
-    app = PDFEditorUnifiedGUI()
+    app = EditorPDFGUI()
     app.run()
 
 
