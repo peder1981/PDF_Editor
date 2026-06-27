@@ -6,8 +6,8 @@ Advanced PDF Editor - Terminal User Interface
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, Vertical
 from textual.widgets import (
-    Button, Header, Footer, Input, Label, DataTable, 
-    TextLog, ProgressBar, Select, Checkbox, Static, RichLog
+    Button, Header, Footer, Input, Label, DataTable,
+    ProgressBar, Select, Checkbox, Static, RichLog
 )
 from textual.screen import ModalScreen
 from textual.message import Message
@@ -16,7 +16,39 @@ from pathlib import Path
 import asyncio
 from rich.text import Text
 
+import sys
+sys.path.insert(0, str(Path(__file__).parent.parent / "core"))
+
 from pdf_editor import PDFEditor, EditOperation
+from method_dispatch import apply_replacement
+
+
+class InputModal(ModalScreen):
+    """Modal for generic text input"""
+
+    def __init__(self, prompt: str = "Enter value:", placeholder: str = ""):
+        super().__init__()
+        self.prompt = prompt
+        self.placeholder = placeholder
+
+    def compose(self) -> ComposeResult:
+        yield Container(
+            Label(self.prompt, classes="label"),
+            Input(placeholder=self.placeholder, classes="input"),
+            Horizontal(
+                Button("Cancel", variant="primary", id="cancel"),
+                Button("OK", variant="success", id="ok"),
+                classes="buttons"
+            ),
+            classes="dialog"
+        )
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "cancel":
+            self.dismiss(None)
+        elif event.button.id == "ok":
+            input_widget = self.query_one(Input)
+            self.dismiss(input_widget.value)
 
 
 class FileSelectModal(ModalScreen):
@@ -56,7 +88,13 @@ class ReplaceModal(ModalScreen):
             Select([
                 ("Exact Positioning", "exact"),
                 ("Comprehensive", "comprehensive"),
-                ("Structure Preserving", "structure")
+                ("Structure Preserving", "structure"),
+                ("Smart", "smart"),
+                ("Heuristic", "heuristic"),
+                ("Integral", "integral"),
+                ("Template", "template"),
+                ("Layout Preserving", "layout-preserving"),
+                ("Background Preserving", "background-preserving")
             ], value="exact", id="method_select"),
             Checkbox("Case sensitive", id="case_checkbox"),
             Checkbox("Preview before applying", id="preview_checkbox", value=True),
@@ -333,45 +371,14 @@ class PDFEditorTUI(App):
                     )
             
             # Perform replacement
-            if config['method'] == "exact":
-                count = self.pdf_editor.replace_text_exact(
-                    config['search'], 
-                    config['replace'], 
-                    config['case_sensitive']
-                )
-            elif config['method'] == "comprehensive":
-                count = self.pdf_editor.replace_text_comprehensive(
-                    config['search'], 
-                    config['replace']
-                )
-            elif config['method'] == "structure":
-                count = self.pdf_editor.replace_text_structure_preserving(
-                    config['search'], 
-                    config['replace']
-                )
-            elif config['method'] == "smart":
-                count = self.pdf_editor.replace_text_smart(
-                    config['search'], 
-                    config['replace']
-                )
-            elif config['method'] == "heuristic":
-                count = self.pdf_editor.replace_text_heuristic(
-                    config['search'], 
-                    config['replace']
-                )
-            elif config['method'] == "integral":
-                count = self.pdf_editor.replace_text_integral(
-                    config['search'], 
-                    config['replace']
-                )
-            elif config['method'] == "template":
-                count = self.pdf_editor.replace_text_template(
-                    config['search'], 
-                    config['replace']
-                )
-            else:
-                count = 0
-            
+            count = apply_replacement(
+                self.pdf_editor,
+                config['method'],
+                config['search'],
+                config['replace'],
+                config['case_sensitive']
+            )
+
             log.write(f"[green]✅ Replaced {count} instances using {config['method']} method[/green]")
             
         except Exception as e:
@@ -444,10 +451,8 @@ class PDFEditorTUI(App):
             log.write("[red]❌ Failed to reload file[/red]")
     
     async def _get_input(self, prompt: str) -> Optional[str]:
-        """Get input from user (simplified version)"""
-        # This is a simplified implementation
-        # In a full implementation, you'd create a proper input modal
-        return await self.push_screen_wait(FileSelectModal())
+        """Get text input from user via modal"""
+        return await self.push_screen_wait(InputModal(prompt=prompt))
 
 
 def main():

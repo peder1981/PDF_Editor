@@ -18,6 +18,7 @@ sys.path.insert(0, str(Path(__file__).parent / "core"))
 
 from pdf_editor import PDFEditor, EditOperation
 from batch_processor import BatchProcessor
+from method_dispatch import apply_replacement
 
 
 class PDFEditorUnifiedGUI:
@@ -193,11 +194,13 @@ class PDFEditorUnifiedGUI:
         status_bar.grid(row=7, column=0, sticky="ew", pady=(5, 0))
     
     def _log(self, message: str):
-        """Adiciona mensagem ao log"""
-        self.log_text.config(state='normal')
-        self.log_text.insert('end', f"{message}\n")
-        self.log_text.see('end')
-        self.log_text.config(state='disabled')
+        """Adiciona mensagem ao log (thread-safe)"""
+        def _do_log():
+            self.log_text.config(state='normal')
+            self.log_text.insert('end', f"{message}\n")
+            self.log_text.see('end')
+            self.log_text.config(state='disabled')
+        self.root.after(0, _do_log)
     
     def _update_source_ui(self):
         """Atualiza interface baseada no modo de origem"""
@@ -315,8 +318,8 @@ class PDFEditorUnifiedGUI:
     def _process_thread(self):
         """Thread de processamento"""
         try:
-            self.process_btn.config(state='disabled')
-            self.status_var.set("Processando...")
+            self.root.after(0, lambda: self.process_btn.config(state='disabled'))
+            self.root.after(0, lambda: self.status_var.set("Processando..."))
             
             source = self.source_path.get()
             dest = self.dest_path.get()
@@ -333,16 +336,16 @@ class PDFEditorUnifiedGUI:
             else:
                 self._process_batch(source, dest, method, case_sensitive)
             
-            self.status_var.set("Processamento concluído!")
-            messagebox.showinfo("Sucesso", "Processamento concluído com sucesso!")
+            self.root.after(0, lambda: self.status_var.set("Processamento concluído!"))
+            self.root.after(0, lambda: messagebox.showinfo("Sucesso", "Processamento concluído com sucesso!"))
             
         except Exception as e:
             self._log(f"❌ Erro: {str(e)}")
-            self.status_var.set("Erro no processamento")
-            messagebox.showerror("Erro", f"Falha no processamento:\n{str(e)}")
+            self.root.after(0, lambda: self.status_var.set("Erro no processamento"))
+            self.root.after(0, lambda: messagebox.showerror("Erro", f"Falha no processamento:\n{str(e)}"))
         
         finally:
-            self.process_btn.config(state='normal')
+            self.root.after(0, lambda: self.process_btn.config(state='normal'))
     
     def _process_single(self, source: str, dest: str, method: str, case_sensitive: bool):
         """Processa arquivo único"""
@@ -362,22 +365,7 @@ class PDFEditorUnifiedGUI:
             
             self._log(f"✏️ Substituindo: '{search_text}' → '{replace_text}'")
             
-            if method == "exact":
-                count = editor.replace_text_exact(search_text, replace_text, case_sensitive)
-            elif method == "comprehensive":
-                count = editor.replace_text_comprehensive(search_text, replace_text)
-            elif method == "structure":
-                count = editor.replace_text_structure_preserving(search_text, replace_text)
-            elif method == "smart":
-                count = editor.replace_text_smart(search_text, replace_text)
-            elif method == "heuristic":
-                count = editor.replace_text_heuristic(search_text, replace_text)
-            elif method == "integral":
-                count = editor.replace_text_integral(search_text, replace_text)
-            elif method == "template":
-                count = editor.replace_text_template(search_text, replace_text)
-            else:
-                count = 0
+            count = apply_replacement(editor, method, search_text, replace_text, case_sensitive)
             
             self._log(f"   → {count} substituições realizadas")
         

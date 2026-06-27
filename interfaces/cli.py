@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "core"))
 
 from pdf_editor import PDFEditor, EditOperation
 from batch_processor import BatchProcessor
+from method_dispatch import apply_replacement
 
 app = typer.Typer(help="Advanced PDF Editor - Edit PDFs while preserving structure")
 console = Console()
@@ -80,27 +81,7 @@ def replace(
     ) as progress:
         task = progress.add_task(f"Replacing text using {method} method...", total=None)
         
-        if method == "exact":
-            replacements = editor.replace_text_exact(search_text, replace_text, case_sensitive)
-        elif method == "comprehensive":
-            replacements = editor.replace_text_comprehensive(search_text, replace_text)
-        elif method == "structure":
-            replacements = editor.replace_text_structure_preserving(search_text, replace_text)
-        elif method == "smart":
-            replacements = editor.replace_text_smart(search_text, replace_text)
-        elif method == "heuristic":
-            replacements = editor.replace_text_heuristic(search_text, replace_text)
-        elif method == "integral":
-            replacements = editor.replace_text_integral(search_text, replace_text)
-        elif method == "template":
-            replacements = editor.replace_text_template(search_text, replace_text)
-        elif method == "layout-preserving":
-            replacements = editor.replace_text_layout_preserving(search_text, replace_text, case_sensitive)
-        elif method == "background-preserving":
-            replacements = editor.replace_text_background_preserving(search_text, replace_text, case_sensitive)
-        else:
-            console.print(f"[red]Error: Unknown method '{method}'[/red]")
-            raise typer.Exit(1)
+        replacements = apply_replacement(editor, method, search_text, replace_text, case_sensitive)
         
         progress.update(task, description="Saving PDF...")
         
@@ -326,6 +307,7 @@ def create_sample_config():
 def tui():
     """Launch the Terminal User Interface"""
     try:
+        sys.path.insert(0, str(Path(__file__).parent))
         from tui import PDFEditorTUI
         app_tui = PDFEditorTUI()
         app_tui.run()
@@ -338,6 +320,7 @@ def tui():
 def gui():
     """Launch the Graphical User Interface"""
     try:
+        sys.path.insert(0, str(Path(__file__).parent))
         from gui import PDFEditorGUI
         app_gui = PDFEditorGUI()
         app_gui.run()

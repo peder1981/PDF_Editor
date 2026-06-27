@@ -11,6 +11,9 @@ from rich.table import Table
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.panel import Panel
 
+import sys
+sys.path.insert(0, str(Path(__file__).parent.parent / "core"))
+
 from improved_pdf_editor import ImprovedPDFEditor
 
 app = typer.Typer(help="Advanced PDF Editor - Enhanced version with improved font preservation")

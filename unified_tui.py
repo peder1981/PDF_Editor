@@ -22,6 +22,7 @@ sys.path.insert(0, str(Path(__file__).parent / "core"))
 
 from pdf_editor import PDFEditor, EditOperation
 from batch_processor import BatchProcessor
+from method_dispatch import apply_replacement
 
 
 class FileBrowserModal(ModalScreen):
@@ -245,9 +246,12 @@ class UnifiedTUIMain(App):
         self._update_displays()
     
     def _log(self, message: str):
-        """Adiciona mensagem ao log"""
-        log = self.query_one("#log", RichLog)
-        log.write(message)
+        """Adiciona mensagem ao log (thread-safe via call_from_thread)"""
+        try:
+            log = self.query_one("#log", RichLog)
+            self.call_from_thread(log.write, message)
+        except Exception:
+            pass  # Widget not ready yet
     
     def _update_displays(self):
         """Atualiza displays de caminho"""
@@ -443,7 +447,7 @@ class UnifiedTUIMain(App):
             
         except Exception as e:
             self._log(f"❌ Erro no processamento: {str(e)}")
-    
+
     def _process_single(self, method: str, case_sensitive: bool):
         """Processa arquivo único"""
         self._log("📄 Processando arquivo único...")
@@ -461,22 +465,7 @@ class UnifiedTUIMain(App):
             
             self._log(f"✏️ Substituindo: '{search_text}' → '{replace_text}'")
             
-            if method == "exact":
-                count = editor.replace_text_exact(search_text, replace_text, case_sensitive)
-            elif method == "comprehensive":
-                count = editor.replace_text_comprehensive(search_text, replace_text)
-            elif method == "structure":
-                count = editor.replace_text_structure_preserving(search_text, replace_text)
-            elif method == "smart":
-                count = editor.replace_text_smart(search_text, replace_text)
-            elif method == "heuristic":
-                count = editor.replace_text_heuristic(search_text, replace_text)
-            elif method == "integral":
-                count = editor.replace_text_integral(search_text, replace_text)
-            elif method == "template":
-                count = editor.replace_text_template(search_text, replace_text)
-            else:
-                count = 0
+            count = apply_replacement(editor, method, search_text, replace_text, case_sensitive)
             
             self._log(f"   → {count} substituições realizadas")
         

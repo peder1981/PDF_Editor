@@ -11,7 +11,11 @@ from typing import Optional, List
 from pathlib import Path
 import json
 
+import sys
+sys.path.insert(0, str(Path(__file__).parent.parent / "core"))
+
 from pdf_editor import PDFEditor, EditOperation, TextInstance
+from method_dispatch import apply_replacement
 
 
 class PDFEditorGUI:
@@ -178,6 +182,12 @@ class PDFEditorGUI:
         ttk.Radiobutton(method_frame, text="Exact Positioning", variable=self.method_var, value="exact").pack(anchor='w')
         ttk.Radiobutton(method_frame, text="Comprehensive", variable=self.method_var, value="comprehensive").pack(anchor='w')
         ttk.Radiobutton(method_frame, text="Structure Preserving", variable=self.method_var, value="structure").pack(anchor='w')
+        ttk.Radiobutton(method_frame, text="Smart", variable=self.method_var, value="smart").pack(anchor='w')
+        ttk.Radiobutton(method_frame, text="Heuristic", variable=self.method_var, value="heuristic").pack(anchor='w')
+        ttk.Radiobutton(method_frame, text="Integral", variable=self.method_var, value="integral").pack(anchor='w')
+        ttk.Radiobutton(method_frame, text="Template", variable=self.method_var, value="template").pack(anchor='w')
+        ttk.Radiobutton(method_frame, text="Layout Preserving", variable=self.method_var, value="layout-preserving").pack(anchor='w')
+        ttk.Radiobutton(method_frame, text="Background Preserving", variable=self.method_var, value="background-preserving").pack(anchor='w')
         
         # Action buttons
         button_frame = ttk.Frame(search_group)
@@ -398,22 +408,7 @@ class PDFEditorGUI:
                 
                 self._log_message(f"✏️ Replacing '{search_text}' → '{replace_text}' using {method} method")
                 
-                if method == "exact":
-                    count = self.pdf_editor.replace_text_exact(search_text, replace_text, self.case_sensitive_var.get())
-                elif method == "comprehensive":
-                    count = self.pdf_editor.replace_text_comprehensive(search_text, replace_text)
-                elif method == "structure":
-                    count = self.pdf_editor.replace_text_structure_preserving(search_text, replace_text)
-                elif method == "smart":
-                    count = self.pdf_editor.replace_text_smart(search_text, replace_text)
-                elif method == "heuristic":
-                    count = self.pdf_editor.replace_text_heuristic(search_text, replace_text)
-                elif method == "integral":
-                    count = self.pdf_editor.replace_text_integral(search_text, replace_text)
-                elif method == "template":
-                    count = self.pdf_editor.replace_text_template(search_text, replace_text)
-                else:
-                    count = 0
+                count = apply_replacement(self.pdf_editor, method, search_text, replace_text, self.case_sensitive_var.get())
                 
                 self._log_message(f"✅ Replaced {count} instances")
                 self.status_var.set(f"Replaced {count} instances")
